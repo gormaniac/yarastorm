@@ -1,0 +1,34 @@
+name: gormo.yara
+version: 0.0.1
+guid: f418c8589b13201801b9a4bf2b4f7842
+
+synapse_minversion: [2, 137, 0]
+
+genopts:
+    dotstorm: true
+
+author:
+  url: https://github.com/gormaniac
+  name: John Gorman
+
+desc: Dispatch Yara scans on files in an Axon.
+
+modules:
+  - name: gormo.yara.lib
+
+commands:
+  - name: gormo.yara.scan
+    descr: |
+      Scan files with Yara.
+
+  - name: gormo.yara.check
+    descr: |
+      Check if a Yara rule is valid and print compile errors, if any.
+
+  - name: gormo.yara.release
+    descr: |
+      Tag Yara rules for release into the scanning system.
+
+  - name: gormo.yara.disable
+    descr: |
+      Tag Yara rules for removal from the scanning system.
