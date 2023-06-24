@@ -1,0 +1,8 @@
+*__pycache__*
+.vscode
+*.egg-info*
+docs/.buildinfo
+docs/.doctrees/
+
+# Delete this for a real project
+Pipfile.lock

@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "{{NAME}}"
+version = "0.0.1"
+description = "The {{NAME}} Python package"
+readme = "README.md"
+requires-python = ">=3.11"
+
+# Fill in dependencies here.
+dependencies = []
+
+[[project.authors]]
+name = "{{AUTHOR}}"
+
+[project.license]
+file = "LICENSE"
+
+[project.urls]
+Homepage = "{{GHBASE}}/{{NAME}}"
+Documentation = "{{DOCSBASE}}/{{NAME}}/"
+
+[tool.setuptools.packages.find]
+namespaces = true
+where = ["src"]
