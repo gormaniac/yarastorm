@@ -7,6 +7,7 @@ name = "pypi"
 synapse = "*"
 pyyaml = "*"
 stormlibpp = "*"
+yara-python = "*"
 
 [dev-packages]
 black = "*"
@@ -17,6 +18,8 @@ sphinx = "*"
 sphinx-rtd-theme = "*"
 tomlkit = "*"
 twine = "*"
+pytest = "*"
+pytest-asyncio = "*"
 
 [requires]
 python_version = "3.11"

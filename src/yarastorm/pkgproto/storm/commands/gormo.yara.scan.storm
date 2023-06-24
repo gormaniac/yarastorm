@@ -1,0 +1,5 @@
+init {
+    $yaralib = $lib.import(gormo.yara.lib)
+}
+
+$lib.print($yaralib.match("test sha 256", $node))

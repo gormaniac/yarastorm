@@ -1,0 +1,10 @@
+init {
+    $yaralib = $lib.import(gormo.yara.lib)
+}
+
+switch $node.form() {
+    "it:app:yara:rule": {
+        $lib.print($yaralib.compile($node))
+    }
+}
+

@@ -1,0 +1,11 @@
+init {
+    $svc = $lib.service.get(gormo.yara)
+}
+
+function match(sha256, yara_rule) {
+    return($svc.matchFile($sha256, $yara_rule.pack()))
+}
+
+function compile(rule, check) {
+    return($svc.compileRule($rule.pack(), $check))
+}

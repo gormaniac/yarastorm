@@ -22,4 +22,4 @@ class GormoYaraPkg(StormPkg):
     """The gormo.yara Storm package for the yarastorm service."""
 
 
-PKGDEFS = (GormoYaraPkg(proto_name="gormo.yara").asdict(),)
+PKGDEFS = (GormoYaraPkg(proto_name=SVC_NAME).asdict(),)
