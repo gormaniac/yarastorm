@@ -1,12 +1,12 @@
 """The CellApi implementation for yarastorm."""
 
 
+from stormlibpp.telepath import BoolRetn
+from stormlibpp.utils import normver
 import synapse.lib.cell as s_cell
 import synapse.lib.stormsvc as s_stormsvc
 
-from . import BoolRetn
 from .defs import SVC_EVTS, PKGDEFS, SVC_NAME, SVC_VER
-from .lib import normver
 
 
 class YaraApi(s_cell.CellApi, s_stormsvc.StormSvc):

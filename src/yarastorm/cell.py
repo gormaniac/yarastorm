@@ -1,9 +1,9 @@
 """The yarastorm service."""
 
 
+from stormlibpp.telepath import BoolRetn
 import synapse.lib.cell as s_cell
 
-from . import BoolRetn
 from .api import YaraApi
 
 

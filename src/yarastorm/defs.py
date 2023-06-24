@@ -1,8 +1,9 @@
 """The Python definition of the yarastorm Storm package."""
 
 
+from stormlibpp import StormPkg
+
 from . import __version__
-from .lib import StormPkg
 
 
 SVC_NAME = "gormo.yara"
