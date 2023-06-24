@@ -1,13 +1,13 @@
-:github_url: {{GHBASE}}/{{NAME}}
+:github_url: https://github.com/gormaniac/yarastorm
 
-Welcome to {{NAME}}'s documentation!
+Welcome to yarastorm's documentation!
 =======================================
 
 .. toctree::
    :maxdepth: 3
    :caption: Contents:
 
-   {{NAME}}
+   yarastorm
 
 * :ref:`modindex`
 * :ref:`search`

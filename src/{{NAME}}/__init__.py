@@ -1,3 +1,0 @@
-"""The {{NAME}} Python Package."""
-
-__version__ = "0.0.1"

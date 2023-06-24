@@ -1,4 +1,4 @@
-NAME = {{NAME}}
+NAME = yarastorm
 PKG_DIR = src/$(NAME)
 
 .PHONY: help
@@ -43,8 +43,8 @@ read-docs: # Open the package docs locally
 	open docs/index.html
 
 .PHONY: version
-version: # Display the version of {{NAME}} installed in the pipenv
-	pipenv run python3 -m {{NAME}} --version
+version: # Display the version of yarastorm installed in the pipenv
+	pipenv run python3 -m yarastorm --version
 
 .PHONY: release
 release: change-version clean setup build docs # Build a new versioned release and push it (requires VERSION=#.#.#)
