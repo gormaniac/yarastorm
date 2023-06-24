@@ -6,19 +6,30 @@ import os
 import sys
 
 import synapse.common as s_common
+import synapse.exc as s_exc
 from synapse.tools.genpkg import tryLoadPkgProto
-import yaml
+
+
+class StormPkgError(Exception):
+    """An error in a StormPkg."""
+
+
+class StormPkgNoProtoError(StormPkgError):
+    """The proto Yaml file for a StormPkg does not exist."""
+
+
+class StormPkgResolveError(StormPkgError):
+    """The package proto's directory for a StormPkg could not be resolved."""
+
+
+class StormPkgBadDefError(StormPkgError):
+    """The package proto's directory for a StormPkg could not be resolved."""
 
 
 class StormPkg:
     """A Python representation of a Storm package, proto and definition.
 
-    This class must be subclassed. Subclasses must set the following class
-    properties according to their ``Properties`` docs below::
-
-        pkg_name
-        pkg_ver
-        synapse_minversion
+    This class must be subclassed - this is how default proto dir loading is supported.
 
     By default, this subclasses expect a Storm package proto to be stored in a
     ``pkgproto`` directory that is within the same directory as the ``__init__.py``
@@ -28,15 +39,12 @@ class StormPkg:
 
     This object is ready to use on init - access the ``pkgdef`` prop for
     the full Storm package definition loaded from the definied package proto.
+    The ``pkgdef`` property is also returned by this object's ``asdict`` method.
 
     It takes the following steps on start up:
 
         - Resolves the path of the package proto based on ``proto_name`` and
         ``proto_dir``.
-        - Updates the proto's Yaml file with any of the required passed in
-        arguments, if they are different from what was passed into the class.
-        This behavior ensures that the Python references to the package's
-        identifying information is accurate.
         - Loads the package proto using ``synapse.tools.genpkg.tryLoadPkgProto``.
         - Converts the returned object to a ``dict`` using ``json.dumps`` and
         ``json.loads``.
@@ -47,10 +55,7 @@ class StormPkg:
             is set to a ``dict``.
         - Sets the loaded package definition's ``build`` key to a ``dict`` containing
         the time using ``synapse.common.now``.
-        - Sets the package definition ``dict`` to the ``pkdef`` property.
-
-    Use the ``dict()`` method to get the ``pkdef`` property. The ``pkdef``
-    property is also this object's ``__repr__``.
+        - Stores the package definition ``dict`` in the ``pkdef`` property.
 
     Parameters
     ----------
@@ -61,24 +66,11 @@ class StormPkg:
     proto_dir : str | None, optional
         The fully resolved directory that the package proto is in. A value
         of ``None`` tells ``StormPkg``. By default None.
-    
+
     Properties
     ----------
     pkgdef : dict
         The loaded Storm package definition.
-    pkg_name : str
-        The name of the Storm package this object will represent.
-    pkg_ver : str | tuple
-        The version of the Storm package. Can either be a semantic version str
-        or a Synapse version tuple.
-    synapse_minversion : tuple
-        The minimum Synapse version the Storm package works with.
-    name : str
-        A pointer to ``pkg_name``.
-    verstr : str
-        The normalized semantic version str based on ``pkg_ver``.
-    vertup : str
-        The normalized Synapse version tuple based on ``pkg_ver``.
     proto_dir : str
         The directory that the Storm package's proto is in. This is
         the ``proto_dir`` argument if it is passed. Otherwise, the dir
@@ -90,89 +82,100 @@ class StormPkg:
         The name of the Storm package's proto Yaml file (without extension).
         This is the ``proto_name`` argument if passed.
         Otherwise, it is ``self.name``.
-    """
 
-    pkg_name: str = None
-    pkg_ver: str | tuple = None
-    synapse_minversion: tuple = None
+    Raises
+    ------
+    StormPkgBadDefError
+        If the package proto either has an invalid schema or bad value.
+    StormPkgNoProtoError
+        If the proto Yaml file cannot be loaded. This can happen if the file name
+        will not match ``name``/``pkg_name`` but ``proto_name`` is not passed.
+    StormPkgResolveError
+        If the default package proto dir cannot be resolved. This can be the case
+        if a `StormPkg` is created and doesn't expect to use the default proto dir
+        but a custom ``proto_dir`` is not passed.
+    RuntimeError
+        If this class is instantiated directly and not subclassed.
+    """
 
     def __init__(
         self,
         proto_name: str | None = None,
         proto_dir: str | None = None,
     ) -> None:
-
-        if (
-            self.pkg_name is None
-            or self.pkg_ver is None
-            or self.synapse_minversion is None
-        ):
-            raise ValueError("Subclasses must set the required class properties.")
-
-        self.name = self.pkg_name
-        self.verstr, self.vertup = normver(self.pkg_ver)
+        if StormPkg not in self.__class__.__bases__:
+            raise RuntimeError("StormPkg must be subclassed.")
 
         if proto_dir:
             self.proto_dir = proto_dir
         else:
+            try:
+                resolved_path = sys.modules[self.__class__.__module__].__file__
+            except AttributeError as err:
+                raise StormPkgResolveError(
+                    "Unable to automatically resolve the package proto's directory. "
+                    "Try passing proto_dir."
+                ) from err
+
             self.proto_dir = os.path.abspath(
                 os.path.join(
-                    os.path.dirname(sys.modules[self.__class__.__module__].__file__),
+                    os.path.dirname(resolved_path),
                     "pkgproto",
                 )
             )
 
         self.proto = os.path.join(
-            self.proto_dir, f"{proto_name if proto_name else self.name}.yaml"
+            self.proto_dir,
+            f"{proto_name if proto_name else self.__class__.__name__.lower()}.yaml",
         )
-
-        self._update_proto()
 
         self.pkgdef = self._load_proto()
         """A Python dict containing the full Storm package definition."""
 
-    def __repr__(self):
-        return self.pkgdef
-
     def _load_proto(self) -> dict:
         """Load the package proto and convert it to a package definition."""
 
-        pkgdef = json.loads(
-            json.dumps(tryLoadPkgProto(self.proto, readonly=True), sort_keys=True)
-        )
+        try:
+            pkgdef = json.loads(json.dumps(tryLoadPkgProto(self.proto, readonly=True)))
+        except s_exc.NoSuchFile as err:
+            raise StormPkgNoProtoError(
+                "One of the package's proto files do not exist. "
+                "Try passing proto_name and/or proto_dir. "
+                "May also indicate a missing .storm file."
+            ) from err
+        except (s_exc.BadArg, s_exc.BadPkgDef, s_exc.SchemaViolation,) as err:
+            raise StormPkgBadDefError(
+                "The specified package proto was invalid."
+            ) from err
 
         pkgdef["build"] = {"time": s_common.now()}
 
         return pkgdef
 
-    def _update_proto(self) -> None:
-        """Update the proto Yaml file to use the constants defined by this class."""
+    def asdict(self):
+        """Return this objects full Storm package definition as a Python dict.
 
-        with open(self.proto, "r") as rfd:
-            proto_yaml = yaml.safe_load(rfd)
+        Pointer to ``self.pkgdef``.
+        """
 
-        if proto_yaml.get("name") != self.name:
-            proto_yaml["name"] = self.name
-
-        if proto_yaml.get("version") != self.verstr:
-            proto_yaml["version"] = self.verstr
-
-        if list(proto_yaml.get("synapse_minversion")) != list(self.synapse_minversion):
-            proto_yaml["synapse_minversion"] = list(self.synapse_minversion)
-
-        with open(self.proto, "wb") as wfd:
-            yaml.safe_dump(proto_yaml, wfd, encoding="utf-8")
+        return self.pkgdef
 
 
 def normver(ver: str | tuple) -> tuple[str, tuple]:
-    """Take either a version str "x.x.x" or tuple (x, x, x) and return both."""
+    """Take either a version str "x.x.x" or tuple (x, x, x) and return both.
+
+    Raises
+    ------
+    TypeError
+        If ``ver`` is not a str or tuple.
+    """
 
     if isinstance(ver, str):
         verstr = ver
         vertup = tuple(ver.split("."))
     elif isinstance(ver, tuple):
         vertup = ver
-        verstr = ".".join(ver)
+        verstr = ".".join([str(part) for part in ver])
     else:
         raise TypeError("Can only use a str or tuple as a Storm pkg version")
 
