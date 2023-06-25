@@ -7,7 +7,6 @@ name = "pypi"
 synapse = "*"
 pyyaml = "*"
 stormlibpp = "*"
-yara-python = "*"
 
 [dev-packages]
 black = "*"

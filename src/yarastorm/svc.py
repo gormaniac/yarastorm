@@ -4,7 +4,7 @@
 import binascii
 import os
 
-from stormlibpp import s_exc
+from stormlibpp import utils
 from stormlibpp.telepath import BoolRetn
 import synapse.exc as s_exc
 import synapse.lib.cell as s_cell
@@ -37,9 +37,7 @@ class YaraSvc(s_cell.Cell):
     async def __anit__(self, dirn, *args, **kwargs):
         await s_cell.Cell.__anit__(self, dirn, *args, **kwargs)
         self.axonurl = self.conf.get("axon_url")
-        self.ruledir = os.path.abspath(
-            os.path.join(self.dirn, self.conf.get("rule_dir"))
-        )
+        self.ruledir = utils.absjoin(self.dirn, self.conf.get("rule_dir"))
 
     async def _getBytes(self, sha256: str) -> bytes | None:
         buffer = b""
