@@ -15,6 +15,10 @@ desc: Dispatch Yara scans on files in an Axon.
 
 modules:
   - name: gormo.yara.lib
+    desc: A library for working with Yara rules.
+
+  - name: gormo.yara.ingest
+    desc: Code for ingesting results of Yara scans.
 
 commands:
   - name: gormo.yara.scan
@@ -25,10 +29,10 @@ commands:
     descr: |
       Check if a Yara rule is valid and print compile errors, if any.
 
-  - name: gormo.yara.release
+  - name: gormo.yara.enable
     descr: |
-      Tag Yara rules for release into the scanning system.
+      Enable yara rules the scanning system.
 
   - name: gormo.yara.disable
     descr: |
-      Tag Yara rules for removal from the scanning system.
+      Disable yara rules from the scanning system.

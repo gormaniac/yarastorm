@@ -43,7 +43,7 @@ class YaraSvc(s_cell.Cell):
     async def matchFile(self, file_sha256: str, yara_rule) -> BoolRetn:
         """Test if a Yara rule matches a given file in the Axon."""
 
-        retn = BoolRetn(status=False, mesg="", data=True)
+        retn = BoolRetn(status=True, mesg="", data=True)
         return retn
 
     async def compileRule(self, yara_rule, check: bool = False) -> BoolRetn:

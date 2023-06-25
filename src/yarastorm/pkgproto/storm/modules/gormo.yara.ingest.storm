@@ -1,0 +1,4 @@
+function yara_match(rule, file) {
+    [( it:app:yara:match=($rule, $file) )]
+    return($lib.null)
+}
