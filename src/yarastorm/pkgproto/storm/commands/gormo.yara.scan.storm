@@ -11,7 +11,7 @@ if ($node.form() = "file:bytes") {
     for $rule in $rules {
 
         $sha256 = $node.value().strip("sha256:")
-        $retn = $yaralib.match($node.value(), $rule)
+        $retn = $yaralib.match($sha256, $rule)
 
         if $retn.status {
             if $retn.data {

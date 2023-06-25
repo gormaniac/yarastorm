@@ -9,8 +9,9 @@ from stormlibpp.telepath import BoolRetn
 import synapse.exc as s_exc
 import synapse.lib.cell as s_cell
 import synapse.telepath as s_telepath
-import yara
+# import yara
 
+from . import yara # Using fake yara for now
 from .api import YaraApi
 
 
@@ -44,7 +45,7 @@ class YaraSvc(s_cell.Cell):
         buffer = b""
 
         async with s_telepath.withTeleEnv():
-            async with await s_telepath.openurl(self.axon_url) as axon:
+            async with await s_telepath.openurl(self.axonurl) as axon:
                 try:
                     async for part in axon.get(binascii.unhexlify(sha256)):
                         buffer += part
