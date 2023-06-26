@@ -1,0 +1,1 @@
+docker build --tag 'testyarastorm' --progress plain -f docker/test-yarastorm/Dockerfile .

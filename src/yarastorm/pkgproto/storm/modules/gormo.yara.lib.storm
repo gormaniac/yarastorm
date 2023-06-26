@@ -1,0 +1,29 @@
+init {
+    $svc = $lib.service.get(gormo.yara)
+}
+
+function get_enabled_rules() {
+    $rules=$lib.set()
+    it:app:yara:rule:enabled=$lib.true { +it:app:yara:rule:enabled $rules.add($node)}
+    return($rules)
+}
+
+function match(sha256, rule) {
+    return($svc.matchFile($sha256, $rule.pack()))
+}
+
+function compile(rule, check) {
+    return($svc.compileRule($rule.pack(), $check))
+}
+
+function enable_rule(rule) {
+    yield $rule
+    [ :enabled=$lib.true ]
+    return($lib.null)
+}
+
+function disable_rule(rule) {
+    yield $rule
+    [ :enabled=$lib.false ]
+    return($lib.null)
+}

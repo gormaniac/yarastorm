@@ -3,6 +3,7 @@
 *.egg-info*
 docs/.buildinfo
 docs/.doctrees/
-
-# Delete this for a real project
+.pytest_cache
+build
+dist
 Pipfile.lock

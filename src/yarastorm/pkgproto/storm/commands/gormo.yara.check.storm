@@ -1,0 +1,23 @@
+init {
+    $yaralib = $lib.import(gormo.yara.lib)
+}
+
+switch $node.form() {
+    "it:app:yara:rule": {
+        $retn = $yaralib.compile($node, $lib.true)
+
+        if $retn.status {
+            $lib.print(
+                "it:app:yara:rule={guid} is a valid Yara rule!",
+                guid=$node.value()
+            )
+        }
+        else {
+            $lib.warn(
+                "it:app:yara:rule={guid} is not a valid Yara rule: {err}",
+                guid=$node.value(),
+                err=$retn.mesg
+            )
+        }
+    }
+}

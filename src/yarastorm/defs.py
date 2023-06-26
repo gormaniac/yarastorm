@@ -21,5 +21,7 @@ SVC_EVTS = {
 class GormoYaraPkg(StormPkg):
     """The gormo.yara Storm package for the yarastorm service."""
 
+    proto_name = SVC_NAME
 
-PKGDEFS = (GormoYaraPkg(proto_name="gormo.yara").asdict(),)
+
+PKGDEFS = (GormoYaraPkg().asdict(),)

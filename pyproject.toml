@@ -4,13 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "yarastorm"
-version = "0.0.1"
+version = "0.1.0"
 description = "The yarastorm Python package"
 readme = "README.md"
 requires-python = ">=3.11"
 
-# Fill in dependencies here.
-dependencies = []
+dependencies = [
+    "pyyaml>=6.0",
+    "stormlibpp>=0.3.0",
+]
 
 [[project.authors]]
 name = "John Gorman"
@@ -25,3 +27,9 @@ Documentation = "https://gormo.co/yarastorm/"
 [tool.setuptools.packages.find]
 namespaces = true
 where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = [
+    "pkgproto/*.yaml",
+    "pkgproto/storm/*/*.storm",
+]

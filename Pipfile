@@ -17,6 +17,8 @@ sphinx = "*"
 sphinx-rtd-theme = "*"
 tomlkit = "*"
 twine = "*"
+pytest = "*"
+pytest-asyncio = "*"
 
 [requires]
 python_version = "3.11"

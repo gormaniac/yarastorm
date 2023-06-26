@@ -21,10 +21,9 @@ class YaraApi(s_cell.CellApi, s_stormsvc.StormSvc):
     async def matchFile(self, file_sha256: str, yara_rule) -> BoolRetn:
         """Test if a Yara rule matches a given file in the Axon."""
 
-
         return await self.cell.matchFile(file_sha256, yara_rule)
 
-    async def compileRule(self, yara_rule) -> BoolRetn:
+    async def compileRule(self, yara_rule, check: bool = False) -> BoolRetn:
         """Compile the given Yara rule and save it to this Cell's storage."""
 
-        return await self.cell.compileRule(yara_rule)
+        return await self.cell.compileRule(yara_rule, check)

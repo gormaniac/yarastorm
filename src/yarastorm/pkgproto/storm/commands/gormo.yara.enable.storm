@@ -3,5 +3,5 @@ init {
 }
 
 if ($node.form() = "it:app:yara:rule") {
-    $yaralib.disable_rule($node)
+    $yaralib.enable_rule($node)
 }

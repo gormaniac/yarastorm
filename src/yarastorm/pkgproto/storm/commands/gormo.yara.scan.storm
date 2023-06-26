@@ -1,0 +1,39 @@
+init {
+    $yaralib = $lib.import(gormo.yara.lib)
+    $yaraingest = $lib.import(gormo.yara.ingest)
+    $rules = $yaralib.get_enabled_rules()
+}
+
+if ($node.form() = "file:bytes") {
+    // We only want to support sha256 hashes
+    +file:bytes:sha256
+
+    for $rule in $rules {
+
+        $sha256 = $node.value().strip("sha256:")
+        $retn = $yaralib.match($sha256, $rule)
+
+        if $retn.status {
+            if $retn.data {
+                $yaraingest.yara_match($rule, $node)
+                $lib.print(
+                    "it:app:yara:rule={rule} matched file:bytes={sha}",
+                    rule=$rule.value(), sha=$sha256
+                )
+            }
+            else {
+                if $lib.debug {
+                    $lib.warn("it:app:yara:rule={rule} did not match file:bytes={sha}",
+                        rule=$rule.value(), sha=$sha256
+                    )
+                }
+            }
+        }
+        else {
+            $lib.warn(
+                "There was an error scanning file:bytes={sha} with it:app:yara:rule={rule}: {err}",
+                sha=$sha256, rule=$rule.value(), err=$retn.mesg
+            )
+        }
+    }
+}
