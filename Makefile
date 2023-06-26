@@ -42,13 +42,9 @@ clean: clean-py # Remove build files - including a forced "git rm" of "dist/*"
 read-docs: # Open the package docs locally
 	open docs/index.html
 
-.PHONY: version
-version: # Display the version of yarastorm installed in the pipenv
-	pipenv run python3 -m yarastorm --version
-
 .PHONY: release
 release: change-version clean setup build docs # Build a new versioned release and push it (requires VERSION=#.#.#)
-	git add dist/* doc/* docs/* pyproject.toml $(PKG_DIR)/__init__.py
+	git add doc/* docs/* pyproject.toml $(PKG_DIR)/__init__.py
 	git commit -m "build: release v$(VERSION)"
 	git push
 	git tag -a v$(VERSION) -m "Release v$(VERSION)"
@@ -66,3 +62,7 @@ pypi: # Upload all Python packages in "dist/" to PyPI.
 .PHONY: docker-build
 docker-build: # Build this project's Docker image
 	scripts/build-docker.sh
+
+.PHONY: docker-run
+docker-run: # Run this project's Docker image
+	scripts/run-docker.sh
