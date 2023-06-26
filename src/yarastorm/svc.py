@@ -5,6 +5,7 @@ import binascii
 import os
 
 from stormlibpp import utils
+from stormlibpp.node import NodeTuple, StormNode
 from stormlibpp.telepath import BoolRetn
 import synapse.exc as s_exc
 import synapse.lib.cell as s_cell
@@ -54,8 +55,10 @@ class YaraSvc(s_cell.Cell):
 
         return buffer
 
-    async def matchFile(self, file_sha256: str, yara_rule) -> BoolRetn:
+    async def matchFile(self, file_sha256: str, yara_rule: NodeTuple) -> BoolRetn:
         """Test if a Yara rule matches a given file in the Axon."""
+
+        rulenode = StormNode.unpack(yara_rule)
 
         file_bytes = await self._getBytes(file_sha256)
 
@@ -67,18 +70,20 @@ class YaraSvc(s_cell.Cell):
             )
 
         # TODO read the compiled yara file from disk if up to date
-        rule = yara.compile(source=yara_rule, error_on_warning=True)
+        rule = yara.compile(source=rulenode.props["text"], error_on_warning=True)
 
         if rule.match(file_bytes):
             return BoolRetn(status=True, mesg="", data=True)
 
         return BoolRetn(status=True, mesg="", data=False)
 
-    async def compileRule(self, yara_rule, check: bool = False) -> BoolRetn:
+    async def compileRule(self, yara_rule: NodeTuple, check: bool = False) -> BoolRetn:
         """Compile the given Yara rule and save it to this Cell's storage."""
 
+        rulenode = StormNode.unpack(yara_rule)
+
         try:
-            rule = yara.compile(source=yara_rule, error_on_warning=True)
+            rule = yara.compile(source=rulenode.props['text'], error_on_warning=True)
         except yara.SyntaxError as err:
             return BoolRetn(status=False, mesg=f"Yara Syntax Error - {err}", data=False)
         except yara.Error as err:
