@@ -1,0 +1,1 @@
+exec python -O -m yarastorm /vertex/storage

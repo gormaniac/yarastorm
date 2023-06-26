@@ -9,8 +9,10 @@ description = "The yarastorm Python package"
 readme = "README.md"
 requires-python = ">=3.11"
 
-# Fill in dependencies here.
-dependencies = []
+dependencies = [
+    "pyyaml>=6.0",
+    "stormlibpp>=0.3.0",
+]
 
 [[project.authors]]
 name = "John Gorman"

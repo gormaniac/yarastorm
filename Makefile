@@ -62,3 +62,7 @@ tests: # Run the pytest suite for this project.
 .PHONY: pypi
 pypi: # Upload all Python packages in "dist/" to PyPI.
 	pipenv run python3 -m twine upload dist/*
+
+.PHONY: docker-build
+docker-build: # Build this project's Docker image
+	scripts/build-docker.sh

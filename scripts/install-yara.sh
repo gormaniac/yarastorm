@@ -1,13 +1,6 @@
-mkdir tmp
-cd tmp
-wget https://github.com/VirusTotal/yara/archive/refs/tags/v4.3.2.zip
-unzip v4.3.2.zip -d yarasrc
-cd yarasrc
-cd yara-master/
-./bootstrap.sh
-brew install automake libtool make gcc pkg-config
-./bootstrap.sh
-./configure --enable-magic --enable-dotnet
-make
-make install
-make check
+# Install yara-python as a system Python package in on a Debian/Ubuntu system
+
+apt-get install -y -qq \
+  automake libssl-dev libtool gcc make pkg-config python3-dev
+
+python -m pip install --break-system-packages yara-python
