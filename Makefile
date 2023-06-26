@@ -61,8 +61,16 @@ pypi: # Upload all Python packages in "dist/" to PyPI.
 
 .PHONY: docker-build
 docker-build: # Build this project's Docker image
-	scripts/build-docker.sh
+	docker/yarastorm/build.sh
 
 .PHONY: docker-run
 docker-run: # Run this project's Docker image
-	scripts/run-docker.sh
+	docker/yarastorm/run.sh
+
+.PHONY: docker-build-test
+docker-build: # Build this project's test Docker image
+	docker/test-yarastorm/build.sh
+
+.PHONY: docker-run-test
+docker-run: # Run this project's test Docker image
+	docker/test-yarastorm/run.sh
