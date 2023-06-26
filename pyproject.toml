@@ -27,3 +27,9 @@ Documentation = "https://gormo.co/yarastorm/"
 [tool.setuptools.packages.find]
 namespaces = true
 where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = [
+    "pkgproto/*.yaml",
+    "pkgproto/*/*.storm",
+]
