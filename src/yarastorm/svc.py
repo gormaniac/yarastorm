@@ -9,9 +9,8 @@ from stormlibpp.telepath import BoolRetn
 import synapse.exc as s_exc
 import synapse.lib.cell as s_cell
 import synapse.telepath as s_telepath
-# import yara
+import yara
 
-from . import yara # Using fake yara for now
 from .api import YaraApi
 
 

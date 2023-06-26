@@ -4,6 +4,6 @@
 docs/.buildinfo
 docs/.doctrees/
 .pytest_cache
-
-# Delete this for a real project
+build
+dist
 Pipfile.lock

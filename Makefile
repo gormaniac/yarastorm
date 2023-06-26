@@ -68,9 +68,9 @@ docker-run: # Run this project's Docker image
 	docker/yarastorm/run.sh
 
 .PHONY: docker-build-test
-docker-build: # Build this project's test Docker image
+docker-build-test: # Build this project's test Docker image
 	docker/test-yarastorm/build.sh
 
 .PHONY: docker-run-test
-docker-run: # Run this project's test Docker image
+docker-run-test: # Run this project's test Docker image
 	docker/test-yarastorm/run.sh
