@@ -72,7 +72,7 @@ class YaraSvc(s_cell.Cell):
         # TODO read the compiled yara file from disk if up to date
         rule = yara.compile(source=rulenode.props["text"], error_on_warning=True)
 
-        if rule.match(file_bytes):
+        if rule.match(data=file_bytes):
             return BoolRetn(status=True, mesg="", data=True)
 
         return BoolRetn(status=True, mesg="", data=False)
