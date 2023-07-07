@@ -27,32 +27,112 @@ class MatchReturn(TelepathRetn):
 
 
 class YaraRules:
+    """Manage the Yara rules that a YaraSvc uses.
+
+    Parameters
+    ----------
+    ruledir : str
+        The directory that compiled Yara rules are saved in.
+    """
+
     def __init__(self, ruledir: str) -> None:
         self.ruledir = ruledir
         self.rules = {}
         self.load()
 
-    def load(self):
+    def load(self) -> None:
+        """Load all compiled Yara rules from the ruledir into this object.
+        
+        Walks the ``ruledir`` and calls ``load_rule`` on each path.
+        """
+
         for dname, _, fname in os.walk(self.ruledir):
             self.load_rule(utils.absjoin(dname, fname))
 
-    def load_rule(self, rpath: str):
-        with open(rpath, "rb") as fd:
-            self.rules[os.path.basename(rpath).split(".")[0]] = yara.load(file=fd)
+    def load_rule(self, rpath: str) -> None:
+        """Load a Yara rule into this object.
+        
+        A loaded rule is stored in ``rules`` with a key of the file's basename.
+        This should equate to the Yara rule's Synapse guid.
 
-    def get(self, rule_id: str):
+        The value is a compiled ``yara.Rules`` object.
+
+        Returns
+        -------
+        None
+        """
+
+        with open(rpath, "rb") as fd:
+            self.rules[os.path.basename(rpath)] = yara.load(file=fd)
+
+    def get(self, rule_id: str) -> yara.Rules | None:
+        """Get a Yara rule from this object, loading from disk if needed.
+
+        Will return None if the Yara rule is not known to this object
+        and the Yara rule does exist on disk.
+
+        Parameters
+        ----------
+        rule_id : str
+            The ID of the rule, which should equate to the rule's file basename
+            on disk. This should be the same as the GUID of the rule according
+            to Synapse.
+
+        Returns
+        -------
+        yara.Rules | None
+            The compiled ``yara.Rules`` object from this object's memory. Or
+            ``None`` if the rule is not stored in this object's memory and
+            cannot be loaded from disk by the given ``rule_id``.
+        """
+
         if rule_id not in self.rules:
             self.load_rule(utils.absjoin(self.ruledir, rule_id))
 
         return self.rules.get(rule_id, None)
 
-    def add(self, rule_id: str, compiled_rule: yara.Rules):
+    def add(self, rule_id: str, compiled_rule: yara.Rules) -> None:
+        """Write a compiled Yara rule to disk and store it in this object.
+
+        Parameters
+        ----------
+        rule_id : str
+            The ID of the rule, which should equate to the rule's file basename
+            on disk. This should be the same as the GUID of the rule according
+            to Synapse.
+        compiled_rule : yara.Rules
+            The compiled Yara rule.
+
+        Returns
+        -------
+        None
+        """
+
         rule_path = utils.absjoin(self.ruledir, rule_id)
         with open(rule_path) as fd:
             compiled_rule.save(file=fd)
         self.load_rule(rule_path)
 
-    def get_rule_from_node(self, node: StormNode):
+    def get_rule_from_node(self, node: StormNode) -> yara.Rules | None:
+        """Get a Yara rule from this object based on the given node.
+
+        This method also handles updating the compiled rule on disk if the node
+        has an ``updated`` property and the value of this property is greater
+        than the compiled rule's on disk last modified timestamp.
+
+        Rules that do not yet exist
+
+        Parameters
+        ----------
+        node : StormNode
+            The ``it:prod:yara:rule`` node to either get or create a Yara rule with.
+
+        Returns
+        -------
+        yara.Rules | None
+            The compiled Yara rule object or None if there was an error.
+        """
+
         rule_id = node.value
         local_mtime = os.stat(utils.absjoin(self.ruledir, rule_id)).st_mtime
         rule_mtime = node.props["updated"]
@@ -64,7 +144,10 @@ class YaraRules:
         if (rule := self.get(rule_id)) is not None and not outdated:
             return rule
         elif node.props["text"] is not None:
-            self.add(rule_id, node.props["text"])
+            try:
+                self.add(rule_id, yara.compile(node.props["text"]))
+            except yara.Error:
+                return None
             return self.get(rule_id)
         else:
             return None
