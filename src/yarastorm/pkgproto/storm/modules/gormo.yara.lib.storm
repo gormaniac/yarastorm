@@ -1,0 +1,41 @@
+<<<<<<< Updated upstream
+=======
+init {
+    $svc = $lib.service.get(gormo.yara)
+}
+
+function get_enabled_rules(filter) {
+    $qry_base = "it:app:yara:rule:enabled=$lib.true"
+    if $filter {
+        $rules_qry = $lib.str.concat($qry_base, " ", $filter)
+    }
+    else {
+        $rules_qry = $qry_base
+    }
+    $rules=$lib.storm.eval($qry_base)
+    $lib.print($rules)
+    return($rules)
+}
+
+function match(sha256, rules) {
+    for $retn in $svc.matchFile($sha256, $rules){
+        emit $retn
+    }
+}
+
+function compile(rule, check) {
+    return($svc.compileRule($rule.pack(), $check))
+}
+
+function enable_rule(rule) {
+    yield $rule
+    [ :enabled=$lib.true ]
+    return($lib.null)
+}
+
+function disable_rule(rule) {
+    yield $rule
+    [ :enabled=$lib.false ]
+    return($lib.null)
+}
+>>>>>>> Stashed changes

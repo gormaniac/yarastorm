@@ -3,6 +3,8 @@
 *.egg-info*
 docs/.buildinfo
 docs/.doctrees/
+dist/*
+build/*
 
 # Delete this for a real project
 Pipfile.lock
