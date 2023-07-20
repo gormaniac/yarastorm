@@ -17,12 +17,16 @@ from .api import YaraApi
 
 
 class YaraMatch(TypedDict):
+    """The results of a single Yara match attempt, either successful or unsuccessful."""
+
     rule: str
     sha256: str
     matched: bool
 
 
-class MatchReturn(TelepathRetn):
+class MatchRetn(TelepathRetn):
+    """A TelepathRetn that describes a Yara match on a file."""
+
     data: YaraMatch | None
 
 
@@ -120,7 +124,8 @@ class YaraRules:
         has an ``updated`` property and the value of this property is greater
         than the compiled rule's on disk last modified timestamp.
 
-        Rules that do not yet exist
+        Rules that do not yet exist on disk will be added to this object and
+        saved to disk.
 
         Parameters
         ----------
@@ -130,27 +135,34 @@ class YaraRules:
         Returns
         -------
         yara.Rules | None
-            The compiled Yara rule object or None if there was an error.
+            The compiled Yara rule object or None if there was a problem.
+            None may also be returned if for some reason the given node does
+            not have a Yara rule stored in the ``text`` property.
         """
 
         rule_id = node.value
-        local_mtime = os.stat(utils.absjoin(self.ruledir, rule_id)).st_mtime
-        rule_mtime = node.props["updated"]
-        if rule_mtime and rule_mtime > local_mtime:
-            outdated = True
+        rpath = utils.absjoin(self.ruledir, rule_id)
+
+        if os.path.exists(rpath):
+            # Checks if the node has an updated property and compares that to the
+            # compiled Yara rule's on-disk last modified time.
+            outdated = bool(
+                node.props["updated"] and node.props["updated"] > os.stat(rpath).st_mtime
+            )
         else:
+            # The rule doesn't exist on disk, so it can't be out of date locally.
             outdated = False
 
         if (rule := self.get(rule_id)) is not None and not outdated:
             return rule
-        elif node.props["text"] is not None:
+        if node.props["text"] is not None:
             try:
                 self.add(rule_id, yara.compile(node.props["text"]))
             except yara.Error:
                 return None
             return self.get(rule_id)
-        else:
-            return None
+
+        return None
 
 
 class YaraSvc(s_cell.Cell):
@@ -175,8 +187,9 @@ class YaraSvc(s_cell.Cell):
     async def __anit__(self, dirn, *args, **kwargs):
         await s_cell.Cell.__anit__(self, dirn, *args, **kwargs)
         self.axonurl = self.conf.get("axon_url")
-        self.ruledir = utils.absjoin(self.dirn, self.conf.get("rule_dir"))
-        self.rules = YaraRules(self.ruledir)
+        self.rules = YaraRules(
+            utils.absjoin(self.dirn, self.conf.get("rule_dir"))
+        )
 
     async def _getBytes(self, sha256: str) -> bytes | None:
         buffer = b""
@@ -196,14 +209,14 @@ class YaraSvc(s_cell.Cell):
 
     async def matchFile(
         self, file_sha256: str, yara_rules: list[NodeTuple]
-    ) -> MatchReturn:
+    ) -> MatchRetn:
         """Test if the given Yara rules match the given file in the Axon."""
 
         file_bytes = await self._getBytes(file_sha256)
         if file_bytes is None:
-            yield MatchReturn(
+            yield MatchRetn(
                 status=False,
-                mesg=f"Unable to find bytes for {file_sha256}",
+                mesg=f"Bytes for file:bytes:sha256={file_sha256} are not in the Axon.",
                 data=None,
             )
             return
@@ -212,19 +225,20 @@ class YaraSvc(s_cell.Cell):
             rule_id = rule_node.value
             rule_obj = self.rules.get_rule_from_node(rule_node)
             if rule_obj and rule_obj.match(data=file_bytes):
-                yield MatchReturn(
+                yield MatchRetn(
                     status=True,
                     mesg="",
                     data=YaraMatch(rule_id, file_sha256, True),
                 )
             elif rule_obj is None:
-                yield MatchReturn(
+                yield MatchRetn(
                     status=False,
-                    mesg=f"There are no rule contents in it:app:yara:rule={rule_id}",
+                    mesg=f"Either it:app:yara:rule={rule_id} has no rule contents "
+                    "or the rule contains an error.",
                     data=None,
                 )
             else:
-                yield MatchReturn(
+                yield MatchRetn(
                     status=True,
                     mesg="",
                     data=YaraMatch(rule_id, file_sha256, False),

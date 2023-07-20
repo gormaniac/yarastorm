@@ -10,9 +10,8 @@ from .defs import SVC_EVTS, PKGDEFS, SVC_NAME, SVC_VER
 
 
 class YaraApi(s_cell.CellApi, s_stormsvc.StormSvc):
-    """The Telepath API endpoints for the triage-sandbox service."""
+    """The Telepath API endpoints for the yarastorm service."""
 
-    # These defaults must be overridden from the StormSvc mixin
     _storm_svc_name = SVC_NAME
     _storm_svc_vers = normver(SVC_VER)[1]
     _storm_svc_evts = SVC_EVTS
@@ -20,7 +19,6 @@ class YaraApi(s_cell.CellApi, s_stormsvc.StormSvc):
 
     async def matchFile(self, file_sha256: str, yara_rule) -> BoolRetn:
         """Test if a Yara rule matches a given file in the Axon."""
-
 
         return await self.cell.matchFile(file_sha256, yara_rule)
 
