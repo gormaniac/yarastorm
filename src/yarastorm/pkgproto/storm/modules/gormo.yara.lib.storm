@@ -1,5 +1,3 @@
-<<<<<<< Updated upstream
-=======
 init {
     $svc = $lib.service.get(gormo.yara)
 }
@@ -38,4 +36,3 @@ function disable_rule(rule) {
     [ :enabled=$lib.false ]
     return($lib.null)
 }
->>>>>>> Stashed changes

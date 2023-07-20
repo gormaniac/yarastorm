@@ -27,8 +27,6 @@ class YaraMatch(TypedDict):
 class MatchRetn(TelepathRetn):
     """A TelepathRetn that describes a Yara match on a file."""
 
-    data: YaraMatch | None
-
 
 class YaraRules:
     """Manage the Yara rules that a YaraSvc uses.
