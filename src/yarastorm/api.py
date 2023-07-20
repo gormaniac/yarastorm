@@ -10,9 +10,8 @@ from .defs import SVC_EVTS, PKGDEFS, SVC_NAME, SVC_VER
 
 
 class YaraApi(s_cell.CellApi, s_stormsvc.StormSvc):
-    """The Telepath API endpoints for the triage-sandbox service."""
+    """The Telepath API endpoints for the yarastorm service."""
 
-    # These defaults must be overridden from the StormSvc mixin
     _storm_svc_name = SVC_NAME
     _storm_svc_vers = normver(SVC_VER)[1]
     _storm_svc_evts = SVC_EVTS
