@@ -6,7 +6,7 @@ name = "pypi"
 [packages]
 synapse = "*"
 pyyaml = "*"
-stormlibpp = "*"
+stormlibpp = "==0.3.1"
 
 [dev-packages]
 black = "*"

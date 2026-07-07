@@ -8,6 +8,7 @@ from typing import TypedDict
 from stormlibpp import utils
 from stormlibpp.node import NodeTuple, StormNode
 from stormlibpp.telepath import BoolRetn, TelepathRetn
+import synapse.cortex as s_cortex
 import synapse.exc as s_exc
 import synapse.lib.cell as s_cell
 import synapse.telepath as s_telepath
@@ -31,6 +32,11 @@ class MatchRetn(TelepathRetn):
 class YaraRules:
     """Manage the Yara rules that a YaraSvc uses.
 
+    # TODO - Once there are too many rules, this will take up a lot of memory.
+    We need to find a way to only cache up to a certain amount of rules.
+
+    # TODO - Go back to GUIDs everywhere instead of idens
+
     Parameters
     ----------
     ruledir : str
@@ -44,7 +50,7 @@ class YaraRules:
 
     def load(self) -> None:
         """Load all compiled Yara rules from the ruledir into this object.
-        
+
         Walks the ``ruledir`` and calls ``load_rule`` on each path.
         """
 
@@ -53,9 +59,9 @@ class YaraRules:
 
     def load_rule(self, rpath: str) -> None:
         """Load a Yara rule into this object.
-        
+
         A loaded rule is stored in ``rules`` with a key of the file's basename.
-        This should equate to the Yara rule's Synapse guid.
+        This should equate to the Yara rule's Synapse iden.
 
         The value is a compiled ``yara.Rules`` object.
 
@@ -77,7 +83,7 @@ class YaraRules:
         ----------
         rule_id : str
             The ID of the rule, which should equate to the rule's file basename
-            on disk. This should be the same as the GUID of the rule according
+            on disk. This should be the same as the iden of the rule according
             to Synapse.
 
         Returns
@@ -100,8 +106,8 @@ class YaraRules:
         ----------
         rule_id : str
             The ID of the rule, which should equate to the rule's file basename
-            on disk. This should be the same as the GUID of the rule according
-            to Synapse.
+            on disk. This should be the same as the iden of the it:app:yara:rule
+            according to Synapse.
         compiled_rule : yara.Rules
             The compiled Yara rule.
 
@@ -138,14 +144,15 @@ class YaraRules:
             not have a Yara rule stored in the ``text`` property.
         """
 
-        rule_id = node.value
+        rule_id = node.iden
         rpath = utils.absjoin(self.ruledir, rule_id)
 
         if os.path.exists(rpath):
             # Checks if the node has an updated property and compares that to the
             # compiled Yara rule's on-disk last modified time.
             outdated = bool(
-                node.props["updated"] and node.props["updated"] > os.stat(rpath).st_mtime
+                node.props["updated"]
+                and node.props["updated"] > os.stat(rpath).st_mtime
             )
         else:
             # The rule doesn't exist on disk, so it can't be out of date locally.
@@ -157,6 +164,7 @@ class YaraRules:
             try:
                 self.add(rule_id, yara.compile(node.props["text"]))
             except yara.Error:
+                # TODO - Return/raise an error here
                 return None
             return self.get(rule_id)
 
@@ -174,6 +182,12 @@ class YaraSvc(s_cell.Cell):
             "description": "The Telepath URL for an Axon service. "
             "This Axon is used to pull files for Yara matching.",
         },
+        "cortex_url": {
+            "type": "string",
+            "description": "The Telepath URL for a Cortex service. "
+            "This Cortex is used to pull enabled Yara rules for each "
+            "scan invocation.",
+        },
         "rule_dir": {
             "type": "string",
             "description": "The directory that compiled Yara rules are saved in. "
@@ -185,9 +199,8 @@ class YaraSvc(s_cell.Cell):
     async def __anit__(self, dirn, *args, **kwargs):
         await s_cell.Cell.__anit__(self, dirn, *args, **kwargs)
         self.axonurl = self.conf.get("axon_url")
-        self.rules = YaraRules(
-            utils.absjoin(self.dirn, self.conf.get("rule_dir"))
-        )
+        self.cortexurl = self.conf.get("cortex_url")
+        self.rules = YaraRules(utils.absjoin(self.dirn, self.conf.get("rule_dir")))
 
     async def _getBytes(self, sha256: str) -> bytes | None:
         buffer = b""
@@ -220,7 +233,7 @@ class YaraSvc(s_cell.Cell):
             return
 
         for rule_node in [StormNode.unpack(rule) for rule in yara_rules]:
-            rule_id = rule_node.value
+            rule_id = rule_node.iden
             rule_obj = self.rules.get_rule_from_node(rule_node)
             if rule_obj and rule_obj.match(data=file_bytes):
                 yield MatchRetn(
@@ -259,5 +272,19 @@ class YaraSvc(s_cell.Cell):
         if check:
             return BoolRetn(status=True, mesg="Successfully compiled rule!", data=True)
 
-        self.rules.add(rulenode.value, rule)
+        self.rules.add(rulenode.iden, rule)
         return BoolRetn(status=True, mesg="", data=True)
+
+    async def enabledRuleIdens(self, filter: str) -> TelepathRetn:
+        async with s_telepath.withTeleEnv():
+            async with await s_telepath.openurl(self.cortexurl) as cortex:
+                cortex: s_cortex.CoreApi
+
+                idens = []
+
+                query = f"it:app:yara:rule:enabled=true {filter}"
+                async for msg in cortex.storm(query):
+                    if msg[0] == "node":
+                        idens.append(StormNode.unpack(msg[1]).iden)
+
+        return idens

@@ -58,14 +58,21 @@ class TestYaraStorm(s_tests.SynTest):
     async def test_cmd_yara_scan(self):
         async with self.getTestAxon() as axon:
             _, sha256 = await axon.put(b"test")
-            async with self.getTestCoreProxSvc(YaraSvc, ssvc_conf={"axon_url": axon.getLocalUrl()}) as (core, prox, svc):
-                await core.nodes('[ it:app:yara:rule=* :text="test" :name="rule1"]')
-                await core.nodes('[ it:app:yara:rule=* :text="rule dummy { condition: true }" :name="dummy" :enabled=$lib.true]')
-                await core.nodes('[ file:bytes=* ]')
-                await core.nodes(f'[ file:bytes={sha256.hex()} ]')
-                msgs = await core.stormlist(f"file:bytes | gormo.yara.scan")
-                print(msgs)
-                self.stormHasNoErr(msgs)
+            async with self.getTestCoreAndProxy({}) as (core, prox):
+                svcconf = {
+                    "axon_url": axon.getLocalUrl(),
+                    "cortex_url": core.getLocalUrl(),
+                }
+                async with self.getTestCell(YaraSvc, svcconf) as svc:
+                    await self.addSvcToCore(svc, core)
+
+                    await core.nodes('[ it:app:yara:rule=* :text="test" :name="rule1"]')
+                    await core.nodes('[ it:app:yara:rule=* :text="rule dummy { condition: true }" :name="dummy" :enabled=$lib.true]')
+                    await core.nodes('[ file:bytes=* ]')
+                    await core.nodes(f'[ file:bytes={sha256.hex()} ]')
+                    msgs = await core.stormlist(f"file:bytes | gormo.yara.scan")
+                    print(msgs)
+                    self.stormHasNoErr(msgs)
 
     async def test_cmd_yara_enable(self):
         async with self.getTestCoreProxSvc(YaraSvc) as (core, prox, svc):

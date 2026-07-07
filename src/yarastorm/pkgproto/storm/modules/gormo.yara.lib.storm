@@ -2,14 +2,20 @@ init {
     $svc = $lib.service.get(gormo.yara)
 }
 
-function get_enabled_rules() {
-    $rules=$lib.set()
-    it:app:yara:rule:enabled=$lib.true { +it:app:yara:rule:enabled $rules.add($node)}
-    return($rules)
+function get_enabled_rules(filter) {
+    $rules = $lib.set()
+    $iden=$lib.null
+    $instruction=`\{ yield $iden {$filter} return($node) }`
+    it:app:yara:rule:enabled=true
+    $iden = $node.iden()
+    +$lib.storm.eval($instruction)
+    $rules.add($node.iden())
+    fini { return($rules) }
 }
 
-function match(sha256, rule) {
-    return($svc.matchFile($sha256, $rule.pack()))
+function match(sha256, rule_idens) {
+    // TODO - Does this need to be a "yield" somehow?
+    return($svc.matchFile($sha256, $rule_idens))
 }
 
 function compile(rule, check) {

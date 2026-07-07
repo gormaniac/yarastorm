@@ -24,6 +24,7 @@ commands:
   - name: gormo.yara.scan
     descr: |
       Scan files with Yara.
+    # TODO - Add arguments for commands here.
 
   - name: gormo.yara.check
     descr: |
@@ -36,3 +37,6 @@ commands:
   - name: gormo.yara.disable
     descr: |
       Disable yara rules from the scanning system.
+
+# TODO - "create" command
+# TODO - "update" command

@@ -1,7 +1,9 @@
 init {
     $yaralib = $lib.import(gormo.yara.lib)
     $yaraingest = $lib.import(gormo.yara.ingest)
-    $rules = $yaralib.get_enabled_rules($cmdopts.filter)
+    // TODO - Switch to job model and "init" the job here
+    // Jobs can save rules for that job so we don't have to pass it around
+    $rules = $yaralib.get_enabled_rules('-#test')
 }
 
 if ($node.form() = "file:bytes") {
