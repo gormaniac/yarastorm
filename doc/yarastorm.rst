@@ -9,29 +9,29 @@ yarastorm.api module
 
 .. automodule:: yarastorm.api
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 yarastorm.defs module
 ---------------------
 
 .. automodule:: yarastorm.defs
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 yarastorm.svc module
 --------------------
 
 .. automodule:: yarastorm.svc
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: yarastorm
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
