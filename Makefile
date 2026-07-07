@@ -24,12 +24,14 @@ install-self: # Install this project's python package using the pipenv's pip
 .PHONY: docs
 docs: # Build the documentation for this package
 	pipenv run sphinx-apidoc -T -f -o doc $(PKG_DIR)
-	pipenv run sphinx-build doc/ docs/
+	pipenv run sphinx-build -b dirhtml doc/ docs/
 
 .PHONY: clean-py
 clean-py: # Clean up Python generated files
 	rm -rf $(PKG_DIR)/__pycache__
 	rm -rf src/*.egg-info
+	git rm -f docs/* --ignore-unmatch
+	rm -rf docs
 
 # Occassionally, this fails if a make release fails after this was run but before
 # "dist/*" commited to git. Run "git add dist/*" and rerun make release.
@@ -44,12 +46,12 @@ read-docs: # Open the package docs locally
 
 .PHONY: release
 release: change-version clean setup build docs # Build a new versioned release and push it (requires VERSION=#.#.#)
-	git add doc/* docs/* pyproject.toml $(PKG_DIR)/__init__.py
+	git add doc/* pyproject.toml $(PKG_DIR)/__init__.py
 	git commit -m "build: release v$(VERSION)"
 	git push
 	git tag -a v$(VERSION) -m "Release v$(VERSION)"
 	git push origin v$(VERSION)
-	$(MAKE) clean-py
+	$(MAKE) clean
 
 .PHONY: tests
 tests: # Run the pytest suite for this project.
